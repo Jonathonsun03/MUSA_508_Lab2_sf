@@ -35,7 +35,7 @@ Steps in this assignment:
 
 3.  Pick a neighborhood of the City to map.
     You will need to do some googling to figure this out.
-    Use the [PHL Track Explorer](https://data-phl.opendata.arcgis.com/datasets/census-tracts-2010/explore?location=40.002759%2C-75.119097%2C11.91) to get the `GEOID10` number from each parcel and add them to the `myTracts` object below.
+    Use the [PHL Track Explorer](c) to get the `GEOID10` number from each parcel and add them to the `myTracts` object below.
     This is just like what was done in the exercise, but with a different neighborhood of your choice.
     Remember that all GEOIDs need to be 10-characters long.
 
@@ -64,46 +64,73 @@ Steps in this assignment:
 ## Load data from {tidycensus}
 
 ```{r acs_vars, cache = TRUE, message = FALSE, warning = FALSE, results=FALSE}
-acs_vars <- c( "[PUT YOUR VAR CODES HERE]")
+Keep <- c(88,89,93,94,99,100,104,105)
 
-myTracts <- c("[YOUR TRACTS GEOIDs HERE]")
+ACS2019_Asian_Codes <- load_variables(2019,
+                                      "acs5",
+                                      cache = TRUE) %>%
+                        filter(grepl('ASIAN', concept)) %>%
+                        slice(Keep)
+ACS2019_Asian_Codes$label <- str_remove(ACS2019_Asian_Codes$label, "Estimate!!Total!!")
+ACS2019_Asian_Codes$label <- str_replace(ACS2019_Asian_Codes$label, "!!"," ")
+ACS2019_Asian_Codes$label <- str_replace(ACS2019_Asian_Codes$label, "!!"," ")
+
+ACS2019_Asian_Codes <- ACS2019_Asian_Codes %>%
+  mutate(Sex = ifelse(grepl('Male',label) == TRUE, 'Male', 'Female'),
+         Immigrant_status = ifelse(grepl('Native',label) == TRUE, 'Native', 'Foriegn'),
+         Age = ifelse(grepl('Under',label) == TRUE, 'Under_18', 'Over_18'),
+         Code = paste(substr(Sex,1,1),substr(Immigrant_status,1,1),Age, sep = ""),
+         Merge_name = paste(name,"E", sep ="")) %>%
+  select(-3)
+
+myTracts <- c("42101037200","42101980700","42101005000","42101980600","42101037300", "42101003902")
 
 acsTractsPHL.2019.sf <- get_acs(geography = "tract",
                              year = 2019,
-                             variables = acs_vars,
+                             variables = ACS2019_Asian_Codes$name,
                              geometry = TRUE,
                              state  = "PA",
                              county = "Philadelphia",
                              output = "wide") %>%
-  dplyr::select (GEOID, NAME, all_of(paste0(acs_vars,"E"))) %>%
-  rename ("[RENAME YOUR VARIABLES HERE]") %>%
+                             dplyr::select (GEOID, NAME, all_of(paste0(ACS2019_Asian_Codes$name,"E"))) %>%
+  rename(MNUnder_18 = 3,
+         MFUnder_18 = 4,
+         MNOver_18 = 5,
+         MFOver_18 = 6,
+         FNUnder_18 = 7,
+         FFUnder_18 = 8,
+         FNOver_18 = 9,
+         FFOver_18 = 10) %>%
   mutate(Neighborhood = ifelse(GEOID %in% myTracts,
-                               "[YOUR NEIGHBORHOOD NAME HERE]",
-                               "REST OF PHILADELPHIA"))
+                               "SOUTH PHILLY",
+                               "REST OF PHILADELPHIA"),
+         Natural_Total = MNUnder_18 + MNOver_18 + FNUnder_18 + FNOver_18,
+         Foriegn_Total = MFUnder_18 + MFOver_18 + FFUnder_18 + FFOver_18,
+         Percent_Natural = Natural_Total/(Natural_Total + Foriegn_Total))
 ```
 
 ## Transform to WGS84 with {sf}
 
 ```{r}
 acsTractsPHL.2019.sf <- acsTractsPHL.2019.sf %>% 
-  st_transform(crs = "[PUT THE WGS84 EPSG CODE HERE]")
+  st_transform(crs = "EPSG:4326")
 ```
 
 ## Plot with {ggplot2}
 
 ```{r ggplot_geom_sf, warning = FALSE, echo = FALSE}
 ggplot()+
-  geom_sf(data = acsTractsPHL.2019.sf, aes(fill = "[YOUR VARIABLE NAME HERE]"),
-          color = "transparent")+
+  geom_sf(data = acsTractsPHL.2019.sf, aes(fill = Percent_Natural),
+          color = "transparent") +
   geom_sf(data = acsTractsPHL.2019.sf %>%
-            filter(Neighborhood == "[YOUR NEIGHBORHOOD NAME HERE]") %>%
+            filter(Neighborhood == "SOUTH PHILLY") %>%
             st_union(),
           color = "white",
           fill = "transparent")+
   # Bonus to figure out different color ramps with scale_fill_viridis()
   labs(
-    title = "[YOUR TITLE HERE]",
-    subtitle = "[YOUR SUBTITLE HERE]",
-    caption = "[YOUR CAPTION HERE]")
+    title = "South Philadelphia Percent Natural Born Asians",
+    subtitle = "Percent population of Asian Population that is domestic",
+    caption = "insert something")
 
 ```

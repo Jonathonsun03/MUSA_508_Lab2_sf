@@ -6,25 +6,48 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = F, fig.width=8, fig.height=4)
+options(scipen = 0, digits = 3)  # controls base R output
+if(!require('pacman')) {install.packages('pacman')}
+pacman::p_load(tidyverse, tidycensus, sf, tmap) # add the packages needed
 ```
 
-## R Markdown
+## Finding Variables
+I'm interested in Asian people in the South Philly. 
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+```{r}
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+ACS2019_Asian_Codes <- load_variables(2019,
+                                      "acs5",
+                                      cache = TRUE) %>%
+                        filter(grepl('ASIAN', concept)) %>%
+                        slice(Keep)
+ACS2019_Asian_Codes$label <- str_remove(ACS2019_Asian_Codes$label, "Estimate!!Total!!")
+ACS2019_Asian_Codes$label <- str_replace(ACS2019_Asian_Codes$label, "!!"," ")
+ACS2019_Asian_Codes$label <- str_replace(ACS2019_Asian_Codes$label, "!!"," ")
 
-```{r cars}
-summary(cars)
+ACS2019_Asian_Codes <- ACS2019_Asian_Codes %>%
+  mutate(Sex = ifelse(grepl('Male',label) == TRUE, 'Male', 'Female'),
+         Immigrant_status = ifelse(grepl('Native',label) == TRUE, 'Native', 'Foriegn'),
+         Age = ifelse(grepl('Under',label) == TRUE, 'Under_18', 'Over_18'),
+         Code = paste(substr(Sex,1,1),substr(Immigrant_status,1,1),Age)) %>%
+  select(-3)
+         
+
+
+ACS2019_Asian_Data <- get_acs(geography = "tract",
+                             year = 2019,
+                             variables = ACS2019_Asian_Codes$name,
+                             geometry = TRUE,
+                             state  = "PA",
+                             county = "Philadelphia",
+                             output = "wide") %>%
+                             dplyr::select (GEOID, NAME, all_of(paste0(ACS2019_Asian_Codes$name,"E")))  
+
+
+
+  mutate(Neighborhood = ifelse(GEOID %in% myTracts,
+                               "[YOUR NEIGHBORHOOD NAME HERE]",
+                               "REST OF PHILADELPHIA"))
+
 ```
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
