@@ -17,6 +17,7 @@ library(tidyverse)
 library(tidycensus)
 library(sf)
 library(tmap) # mapping, install if you don't have it
+library(viridis)
 set.seed(717)
 ```
 
@@ -126,7 +127,8 @@ ggplot()+
             filter(Neighborhood == "SOUTH PHILLY") %>%
             st_union(),
           color = "white",
-          fill = "transparent")+
+          fill = "transparent") + 
+  scale_fill_viridis(option="magma")
   # Bonus to figure out different color ramps with scale_fill_viridis()
   labs(
     title = "South Philadelphia Percent Natural Born Asians",

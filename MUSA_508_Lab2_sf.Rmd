@@ -160,7 +160,7 @@ The rabbit hole of understanding coordinate reference systems is very deep. We w
 
 -   you need to know, or figure out, the CRS for all of the spatial data you work with. It is not enough just to guess. You will need to figure it out through looking at data sources and mapping data to confirm
 
--   There are two main types of CRS, Projected and Unprojected (aka Geographic) coordinate systems. Projected Coordinate Systems (PCS) are how we map/project the round earth onto a flat map. Common examples of PCS are State Plane, UTM, and Mercator coordinate systems. Geographic Coordinate Systems (GCS) are how we located things on the round'ish earth. Common examples are WGS84, GRS80, and NAD83. Every PCS is based on a CGS, but a GCS can be mapped on its own.
+-   There are two main types of CRS, Projected and Unprojected (aka Geographic) coordinate systems. Projected Coordinate Systems (PCS) are how we map/project the round earth onto a flat map. Common examples of PCS are State Plane, UTM, and Mercator coordinate systems. Geographic Coordinate Systems (GCS) are how we located things on the round'ish earth. Common examples are WGS84, GRS80, and NAD83. Every PCS is based on a GCS, but a GCS can be mapped on its own.
 
 -   The most common GCS is WGS84, also known as [`EPSG:4326`](https://epsg.io/4326) . This is a very common CRS and the default for many mapping applications and mapping libraries like `leaflet` . You will use it very often.
 

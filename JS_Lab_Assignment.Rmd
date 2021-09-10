@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = F, fig.width=8, fig.height=4)
 options(scipen = 0, digits = 3)  # controls base R output
 if(!require('pacman')) {install.packages('pacman')}
-pacman::p_load(tidyverse, tidycensus, sf, tmap) # add the packages needed
+pacman::p_load(tidyverse, tidycensus, sf, tmap, data.table) # add the packages needed
 ```
 
 ## Finding Variables
@@ -30,10 +30,11 @@ ACS2019_Asian_Codes <- ACS2019_Asian_Codes %>%
   mutate(Sex = ifelse(grepl('Male',label) == TRUE, 'Male', 'Female'),
          Immigrant_status = ifelse(grepl('Native',label) == TRUE, 'Native', 'Foriegn'),
          Age = ifelse(grepl('Under',label) == TRUE, 'Under_18', 'Over_18'),
-         Code = paste(substr(Sex,1,1),substr(Immigrant_status,1,1),Age)) %>%
+         Code = paste(substr(Sex,1,1),substr(Immigrant_status,1,1),Age, sep = ""),
+         Merge_name = paste(name,"E", sep ="")) %>%
   select(-3)
          
-
+myTracts <- c("42101037200","42101980700","42101005000","42101980600","42101037300", "42101003902","42101004202","42101004102","42101004002")
 
 ACS2019_Asian_Data <- get_acs(geography = "tract",
                              year = 2019,
@@ -42,12 +43,20 @@ ACS2019_Asian_Data <- get_acs(geography = "tract",
                              state  = "PA",
                              county = "Philadelphia",
                              output = "wide") %>%
-                             dplyr::select (GEOID, NAME, all_of(paste0(ACS2019_Asian_Codes$name,"E")))  
-
-
-
+                             dplyr::select (GEOID, NAME, all_of(paste0(ACS2019_Asian_Codes$name,"E"))) %>%
+  rename(MNUnder_18 = 3,
+         MFUnder_18 = 4,
+         MNOver_18 = 5,
+         MFOver_18 = 6,
+         FNUnder_18 = 7,
+         FFUnder_18 = 8,
+         FNOver_18 = 9,
+         FFOver_18 = 10) %>%
   mutate(Neighborhood = ifelse(GEOID %in% myTracts,
-                               "[YOUR NEIGHBORHOOD NAME HERE]",
-                               "REST OF PHILADELPHIA"))
+                               "SOUTH PHILLY",
+                               "REST OF PHILADELPHIA"),
+         Natural_Total = MNUnder_18 + MNOver_18 + FNUnder_18 + FNOver_18,
+         Foriegn_Total = MFUnder_18 + MFOver_18 + FFUnder_18 + FFOver_18,
+         Natural_Foriegn_Ratio = Natural_Total/Foriegn_Total)
 
 ```

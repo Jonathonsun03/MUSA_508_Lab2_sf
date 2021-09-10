@@ -23,11 +23,11 @@ Steps in this assignment:
 1.  Make sure you have successfully read, run, and learned from the
     `MUSA_508_Lab2_sf.Rmd` Rmarkdown
 
-2.  Find two new variables from the 2019 ACS data to load. Use `vars <-
-    load_variables(2019, "acs5")` and `View(vars)` to see all of the
-    variable from that ACS. Note that you should not pick something
-    really obscure like count\_38yo\_cabinetmakers because you will get
-    lots of NAs.
+2.  Find two new variables from the 2019 ACS data to load. Use
+    `vars <- load_variables(2019, "acs5")` and `View(vars)` to see all
+    of the variable from that ACS. Note that you should not pick
+    something really obscure like count\_38yo\_cabinetmakers because you
+    will get lots of NAs.
 
 3.  Pick a neighborhood of the City to map. You will need to do some
     googling to figure this out. Use the [PHL Track Explorer](c) to get
@@ -61,9 +61,9 @@ Steps in this assignment:
 
 10. Check your Github repo to see you work in the cloud.
 
-11. Email your lab instructor with a link\!
+11. Email your lab instructor with a link!
 
-12. Congrats\! You made a map in code\!
+12. Congrats! You made a map in code!
 
 ## Load data from {tidycensus}
 
@@ -121,5 +121,7 @@ acsTractsPHL.2019.sf <- acsTractsPHL.2019.sf %>%
 ```
 
 ## Plot with {ggplot2}
+
+    ## although coordinates are longitude/latitude, st_union assumes that they are planar
 
 ![](Lab2_assignment_files/figure-gfm/ggplot_geom_sf-1.png)<!-- -->
